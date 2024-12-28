@@ -1,0 +1,25 @@
+version: '3.4'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "Your_password123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+
+  productpromotionapi:
+    image: productpromotionapi
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"  # Changed from 8080 to 8081
+    depends_on:
+      - sqlserver
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ProductPromotionDB;Trusted_Connection=True;TrustServerCertificate=True;
+      - Jwt__Key=your_secret_key
+      - Jwt__Issuer=your_issuer
+      - Jwt__Audience=your_audience
