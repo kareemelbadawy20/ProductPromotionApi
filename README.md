@@ -14,7 +14,7 @@ The Product Promotion API is a RESTful service built using .NET and ASP.NET Core
 - .NET 9.0 SDK
 - Docker
 - Docker Compose
-- SQL Server or PostgreSQL
+- SQL Server
 
 ## Setup
 
