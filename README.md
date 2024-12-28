@@ -2,40 +2,40 @@
 # Product Promotion API
 
 ## Introduction
-The Product Promotion API is a RESTful service built using .NET and ASP.NET Core. It provides endpoints for managing products and promotions, catering to both administrators and mobile clients. The API adheres to clean architecture principles and SOLID design for scalability, maintainability, and testability.
+The Product Promotion API is a RESTful service built using .NET and ASP.NET Core. It provides endpoints for managing products and promotions, with separate endpoints for administrators and mobile clients. The API follows clean architecture principles and SOLID design principles to ensure scalability, maintainability, and testability.
 
 ## Technology Stack
-- **.NET and ASP.NET Core (C#)**
-- **Entity Framework Core**
-- **SQL Server** or **PostgreSQL**
-- **JWT-based authentication**
+- .NET and ASP.NET Core (C#)
+- Entity Framework Core
+- SQL Server
+- JWT-based authentication
 
 ## Prerequisites
-- **.NET 9.0 SDK**
-- **Docker** and **Docker Compose**
-- **SQL Server** 
-
----
+- .NET 9.0 SDK
+- Docker
+- Docker Compose
+- SQL Server or PostgreSQL
 
 ## Setup
 
-### 1. Clone the Repository
+### Clone the Repository
 ```bash
 git clone https://github.com/kareemelbadawy20/ProductPromotionApi.git
 cd ProductPromotionApi
 ```
 
-### 2. Configure the Database
-Update the `appsettings.json` file with your database connection string:
+### Configure Database
+Ensure your database connection string is configured in `appsettings.json`:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=.\\SQLEXPRESS;Database=ProductPromotionDB;Trusted_Connection=True;TrustServerCertificate=True;"
+    "DefaultConnection": "Server=.\SQLEXPRESS;Database=ProductPromotionDB;Trusted_Connection=True;TrustServerCertificate=True;"
   },
   "Jwt": {
     "Key": "your_secret_key",
-    "Issuer": "your_issuer"
+    "Issuer": "your_issuer",
+    "Audience": "your_audience"
   },
   "Logging": {
     "LogLevel": {
@@ -48,16 +48,17 @@ Update the `appsettings.json` file with your database connection string:
 }
 ```
 
-### 3. Apply Migrations
-Run the following commands to set up the database schema:
+### Apply Migrations
+Run the following commands to apply migrations and create the database:
 ```bash
 dotnet ef migrations add InitialCreate
 dotnet ef database update
 ```
 
-### 4. Run the Application
+### Running the Application
+
 #### Using Docker Compose
-Build and run the service:
+Build and run the Docker Compose setup:
 ```bash
 docker-compose up --build
 ```
@@ -65,10 +66,8 @@ docker-compose up --build
 #### Without Docker
 Run the application directly:
 ```bash
-dotnet run --project ProductPromotionAPI.WebAPI
+dotnet run --project ProductPromotionApi.Api
 ```
-
----
 
 ## API Endpoints
 
@@ -96,8 +95,6 @@ POST /api/admin/products
 }
 ```
 
----
-
 ### Mobile API
 | **Method** | **Endpoint**             | **Description**      |
 |------------|---------------------------|----------------------|
@@ -111,57 +108,58 @@ POST /api/admin/products
 GET /api/mobile/products
 ```
 
----
-
 ## Authentication
-Admin API endpoints require **JWT-based authentication**. Include the token in the `Authorization` header:
+Admin API endpoints use **JWT-based authentication**. Include the token in the `Authorization` header:
 ```
 Authorization: Bearer <your_token>
 ```
-
----
 
 ## Running Tests
 
 ### Unit Tests
 Run unit tests:
 ```bash
-dotnet test ProductPromotionAPI.Tests
+dotnet test ProductPromotionApi.Tests
 ```
 
 ### Integration Tests
 Run integration tests:
 ```bash
-dotnet test ProductPromotionAPI.IntegrationTests
+dotnet test ProductPromotionApi.IntegrationTests
 ```
-
----
 
 ## Docker Instructions
 
 ### Dockerfile
 ```dockerfile
-# Build Stage
+# Use the official .NET SDK image to build the application
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
 WORKDIR /app
 
+# Copy csproj and restore as distinct layers
 COPY *.sln .
-COPY ProductPromotionAPI/* ProductPromotionAPI/
-COPY ProductPromotionAPI.Application/* ProductPromotionAPI.Application/
-COPY ProductPromotionAPI.Domain/* ProductPromotionAPI.Domain/
-COPY ProductPromotionAPI.Infrastructure/* ProductPromotionAPI.Infrastructure/
-COPY ProductPromotionAPI.WebAPI/* ProductPromotionAPI.WebAPI/
+COPY ProductPromotionApi.Api/ProductPromotionApi.Api.csproj ProductPromotionApi.Api/
+COPY ProductPromotionApi.Application/ProductPromotionApi.Application.csproj ProductPromotionApi.Application/
+COPY ProductPromotionApi.Core/ProductPromotionApi.Core.csproj ProductPromotionApi.Core/
+COPY ProductPromotionApi.Infrastructure/ProductPromotionApi.Infrastructure.csproj ProductPromotionApi.Infrastructure/
+COPY ProductPromotionAPI.Tests/ProductPromotionAPI.Tests.csproj ProductPromotionAPI.Tests/
 RUN dotnet restore
 
-WORKDIR /app/ProductPromotionAPI.WebAPI
+# Copy everything else and build the application
+COPY . .
+WORKDIR /app/ProductPromotionApi.Api
 RUN dotnet publish -c Release -o out
 
-# Runtime Stage
+# Use the official ASP.NET Core runtime as the base image for the application
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
-COPY --from=build-env /app/ProductPromotionAPI.WebAPI/out .
+COPY --from=build-env /app/ProductPromotionApi.Api/out .
+
+# Expose port 80 for the application
 EXPOSE 80
-ENTRYPOINT ["dotnet", "ProductPromotionAPI.WebAPI.dll"]
+
+# Set the entry point for the application
+ENTRYPOINT ["dotnet", "ProductPromotionApi.Api.dll"]
 ```
 
 ### Docker Compose
@@ -187,9 +185,19 @@ services:
     depends_on:
       - sqlserver
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ProductPromotionDB;User Id=sa;Password=Your_password123;
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ProductPromotionDB;Trusted_Connection=True;TrustServerCertificate=True;
+      - Jwt__Key=your_secret_key
+      - Jwt__Issuer=your_issuer
+      - Jwt__Audience=your_audience
 ```
 
----
+### Build and Run using Docker Compose
+Build and run the Docker Compose setup:
+```bash
+docker-compose up --build
+```
 
-By following these instructions, you should be able to set up, run, and test the Product Promotion API. For assistance, feel free to reach out!
+### Verify the Setup
+Open a web browser or Postman and navigate to `http://localhost:8080` to verify that the API is running.
+
+Use the API endpoints as described in your project documentation to ensure everything is working correctly.
